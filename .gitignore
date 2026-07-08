@@ -1,0 +1,10 @@
+# Ignore environment variables and secrets
+.env
+
+# Ignore node modules (if you ever run npm install locally)
+node_modules/
+backend/node_modules/
+frontend/node_modules/
+
+# Ignore Mac OS hidden files (just good practice)
+.DS_Store

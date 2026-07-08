@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Staff Management</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; max-width: 600px; margin: 0 auto; }
+        .form-group { margin-bottom: 10px; }
+        input { padding: 8px; width: 100%; box-sizing: border-box; }
+        button { padding: 10px 15px; background: #007bff; color: white; border: none; cursor: pointer; }
+        .staff-list { margin-top: 20px; border-top: 2px solid #eee; padding-top: 20px; }
+        .staff-card { background: #f9f9f9; padding: 10px; margin-bottom: 10px; border-radius: 4px; }
+    </style>
+</head>
+<body>
+
+    <h2>Add New Staff</h2>
+    <form id="staffForm">
+        <div class="form-group"><input type="text" id="name" placeholder="Staff Name" required></div>
+        <div class="form-group"><input type="text" id="role" placeholder="Job Role" required></div>
+        <button type="submit">Add Staff</button>
+    </form>
+
+    <div class="staff-list" id="staffList">
+        <h3>Current Staff</h3>
+    </div>
+
+    <script>
+        const API_URL = 'http://13.233.168.230:5000/api/staff';
+
+        async function loadStaff() {
+            const response = await fetch(API_URL);
+            const data = await response.json();
+            const list = document.getElementById('staffList');
+            list.innerHTML = '<h3>Current Staff</h3>' + data.map(staff => 
+                `<div class="staff-card"><i>${staff.name}</i> - ${staff.role}</div>`
+            ).join('');
+        }
+
+        document.getElementById('staffForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const name = document.getElementById('name').value;
+            const role = document.getElementById('role').value;
+
+            await fetch(API_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, role })
+            });
+
+            document.getElementById('staffForm').reset();
+            loadStaff();
+        });
+
+        loadStaff();
+    </script>
+</body>
+</html>
