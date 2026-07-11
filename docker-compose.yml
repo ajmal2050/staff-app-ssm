@@ -1,4 +1,5 @@
 
+
 services:
   frontend:
     build: ./frontend
@@ -14,10 +15,8 @@ services:
     ports:
       - "5000:5000"
     environment:
-      - DB_USER=${DB_USER}
-      - DB_PASSWORD=${DB_PASSWORD}
-      - DB_NAME=${DB_NAME}
-      - REDIS_HOST=${REDIS_HOST}
+      - AWS_DEFAULT_REGION=ap-south-1
+      - AWS_SECRET_NAME=prod/myapp/secrets
     networks:
       - frontend-net
       - backend-net
@@ -31,12 +30,12 @@ services:
       - backend-net
 
   postgres:
-    image: postgres:15-alpine
+    build: ./postgres
     environment:
-      POSTGRES_USER: ${DB_USER}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
-      POSTGRES_DB: ${DB_NAME}
+      - AWS_DEFAULT_REGION=ap-south-1
+      - AWS_SECRET_NAME=prod/myapp/secrets
     volumes:
+      # Keep the existing data volume
       - postgres_data:/var/lib/postgresql/data
     networks:
       - backend-net
@@ -47,3 +46,4 @@ volumes:
 networks:
   frontend-net:
   backend-net:
+

@@ -1,9 +1,6 @@
-FROM node:18-alpine
+FROM postgres:15-alpine
 RUN apk add --no-cache aws-cli jq bash
-WORKDIR /app
-COPY package*.json ./
-RUN npm install
-COPY . .
 COPY init-secrets.sh /usr/local/bin/init-secrets.sh
 RUN chmod +x /usr/local/bin/init-secrets.sh
 ENTRYPOINT ["/usr/local/bin/init-secrets.sh"]
+
