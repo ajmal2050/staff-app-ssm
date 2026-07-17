@@ -30,7 +30,7 @@ pipeline {
                 script {
                     sh """
                         docker build -t ${ECR_REGISTRY}/${ECR_REPO}:${IMAGE_TAG} .
-                        docker build -t ${ECR_REGISTRY}/${ECR_REPO}:latest .
+                        docker tag ${ECR_REGISTRY}/${ECR_REPO}:${IMAGE_TAG} ${ECR_REGISTRY}/${ECR_REPO}:latest
                     """
                 }
             }
