@@ -24,13 +24,14 @@ pipeline {
             }
         }
 
-        stage('2. Build Docker Image') {
+        stage('2. Build Docker Images') {
             steps {
-                echo 'Building Docker image...'
+                echo 'Building Docker images using Docker Compose...'
                 script {
+                    // FIXED: Using docker compose to read your backend/frontend folders automatically!
+                    // And using triple single-quotes (''') for security.
                     sh '''
-                        docker build -t $ECR_REGISTRY/$ECR_REPO:$IMAGE_TAG .
-                        docker tag $ECR_REGISTRY/$ECR_REPO:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPO:latest
+                        docker compose build
                     '''
                 }
             }
@@ -46,11 +47,12 @@ pipeline {
                     accessKeyVariable: 'AWS_ACCESS_KEY_ID',
                     secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
                 ]]) {
-                    sh """
-                        aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ECR_REGISTRY}
-                        docker push ${ECR_REGISTRY}/${ECR_REPO}:${IMAGE_TAG}
-                        docker push ${ECR_REGISTRY}/${ECR_REPO}:latest
-                    """
+                    // FIXED: Changed """ to ''' and removed { } around variables to clear security warnings!
+                    sh '''
+                        aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $ECR_REGISTRY
+                        docker push $ECR_REGISTRY/$ECR_REPO:$IMAGE_TAG
+                        docker push $ECR_REGISTRY/$ECR_REPO:latest
+                    '''
                 }
             }
         }
@@ -60,25 +62,26 @@ pipeline {
                 echo 'Deploying to private EC2 instance...'
                 // Scoped SSH agent binding for private key authentication
                 sshagent(['ec2-private-ssh-key']) {
-                    sh """
-                        ssh -o StrictHostKeyChecking=no ${EC2_USER}@${EC2_PRIVATE_IP} '
+                    // FIXED: Changed """ to ''' and removed { } around variables!
+                    sh '''
+                        ssh -o StrictHostKeyChecking=no $EC2_USER@$EC2_PRIVATE_IP "
                             # 1. Authenticate EC2 Docker with AWS ECR
-                            aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ECR_REGISTRY}
+                            aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $ECR_REGISTRY
                             
                             # 2. Pull the latest image
-                            docker pull ${ECR_REGISTRY}/${ECR_REPO}:${IMAGE_TAG}
+                            docker pull $ECR_REGISTRY/$ECR_REPO:$IMAGE_TAG
                             
                             # 3. Stop and remove the old container if it exists
-                            docker stop ${CONTAINER_NAME} || true
-                            docker rm ${CONTAINER_NAME} || true
+                            docker stop $CONTAINER_NAME || true
+                            docker rm $CONTAINER_NAME || true
                             
                             # 4. Start the new container in detached mode
-                            docker run -d --name ${CONTAINER_NAME} --restart always -p ${PORT_MAPPING} ${ECR_REGISTRY}/${ECR_REPO}:${IMAGE_TAG}
+                            docker run -d --name $CONTAINER_NAME --restart always -p $PORT_MAPPING $ECR_REGISTRY/$ECR_REPO:$IMAGE_TAG
                             
                             # 5. Clean up unused Docker images on the server
                             docker image prune -f
-                        '
-                    """
+                        "
+                    '''
                 }
             }
         }
