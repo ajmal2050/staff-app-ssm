@@ -31,7 +31,7 @@ pipeline {
                     // FIXED: Using docker compose to read your backend/frontend folders automatically!
                     // And using triple single-quotes (''') for security.
                     sh '''
-                        docker compose build
+                        docker-compose build
                     '''
                 }
             }
