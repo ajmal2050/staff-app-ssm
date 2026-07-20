@@ -64,8 +64,8 @@ pipeline {
                 // Scoped SSH agent binding for private key authentication
                 sshagent(['ec2-private-ssh-key']) {
                     // FIXED: Changed """ to ''' and removed { } around variables!
-                    sh '''
-                        ssh -o StrictHostKeyChecking=no $EC2_USER@$EC2_PRIVATE_IP "
+                    sh """
+                        ssh -o StrictHostKeyChecking=no $EC2_USER@$EC2_PRIVATE_IP << 'EOF'
                             # 1. Authenticate EC2 Docker with AWS ECR
                             aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $ECR_REGISTRY
                             
@@ -81,8 +81,8 @@ pipeline {
                             
                             # 5. Clean up unused Docker images on the server
                             docker image prune -f
-                        "
-                    '''
+                        EOF
+                 """
                 }
             }
         }
