@@ -5,6 +5,7 @@ pipeline {
         // Securely pull infrastructure secrets from Jenkins Credentials Store
         // Using 'credentials()' automatically masks these values in build logs!
         AWS_REGION     = credentials('aws-region-secret')
+        ECR_REGISTRY_URL   = credentials('aws-ecr-registry-url-full')
         ECR_REGISTRY   = credentials('aws-ecr-registry-url')
         ECR_REPO       = credentials('aws-ecr-repo-name')
         EC2_PRIVATE_IP = credentials('ec2-private-ip-secret')
