@@ -69,7 +69,7 @@ pipeline {
             sh """
 ssh -o StrictHostKeyChecking=no ${EC2_USER}@${EC2_PRIVATE_IP} <<EOF
 
-aws ecr get-login-password --region ${AWS_REGION} | sudo docker login --username AWS --password-stdin ${ECR_REGISTRY}
+aws ecr get-login-password --region ${AWS_REGION} | sudo docker login --username AWS --password-stdin ${ECR_REGISTRY_URL}
 
 sudo docker pull ${ECR_REGISTRY}/${ECR_REPO}:${IMAGE_TAG}
 
