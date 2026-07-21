@@ -72,7 +72,7 @@ pipeline {
                          docker rm $CONTAINER_NAME || true
                          docker run -d --name $CONTAINER_NAME --restart always -p $PORT_MAPPING $ECR_REGISTRY/$ECR_REPO:$IMAGE_TAG
                           docker image prune -f
-                     EOF
+EOF
                  '''
                 }
             }
