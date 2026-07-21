@@ -66,15 +66,15 @@ pipeline {
                 sshagent(['ec2-private-ssh-key']) {
                     // FIXED: Changed """ to ''' and removed { } around variables!
                 sh '''
-                         ssh -o StrictHostKeyChecking=no $EC2_USER@$EC2_PRIVATE_IP << 'EOF'
-                         aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $ECR_REGISTRY_FULL
-                         docker pull $ECR_REGISTRY/$ECR_REPO:$IMAGE_TAG
-                         docker stop $CONTAINER_NAME || true
-                         docker rm $CONTAINER_NAME || true
-                         docker run -d --name $CONTAINER_NAME --restart always -p $PORT_MAPPING $ECR_REGISTRY/$ECR_REPO:$IMAGE_TAG
-                          docker image prune -f
-EOF
-                 '''
+        ssh -o StrictHostKeyChecking=no $EC2_USER@$EC2_PRIVATE_IP "
+            aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $ECR_REGISTRY &&
+            docker pull $ECR_REGISTRY/$ECR_REPO:$IMAGE_TAG &&
+            docker stop $CONTAINER_NAME || true &&
+            docker rm $CONTAINER_NAME || true &&
+            docker run -d --name $CONTAINER_NAME --restart always -p $PORT_MAPPING $ECR_REGISTRY/$ECR_REPO:$IMAGE_TAG &&
+            docker image prune -f
+        "
+    '''
                 }
             }
         }
