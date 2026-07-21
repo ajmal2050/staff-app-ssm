@@ -5,7 +5,6 @@ pipeline {
         // Securely pull infrastructure secrets from Jenkins Credentials Store
         // Using 'credentials()' automatically masks these values in build logs!
         AWS_REGION     = credentials('aws-region-secret')
-        ECR_REGISTRY_URL   = credentials('aws-ecr-registry-url-full')
         ECR_REGISTRY   = credentials('aws-ecr-registry-url')
         ECR_REPO       = credentials('aws-ecr-repo-name')
         EC2_PRIVATE_IP = credentials('ec2-private-ip-secret')
@@ -60,35 +59,24 @@ pipeline {
         }
 
         stage('4. Deploy to Private EC2') {
-    steps {
-        echo 'Deploying to private EC2 instance...'
-
-        // Scoped SSH agent binding for private key authentication
-        sshagent(['ec2-private-ssh-key']) {
-
-            sh """
-ssh -o StrictHostKeyChecking=no ${EC2_USER}@${EC2_PRIVATE_IP} <<EOF
-
-aws ecr get-login-password --region ${AWS_REGION} | sudo docker login --username AWS --password-stdin ${ECR_REGISTRY_URL}
-
-sudo docker pull ${ECR_REGISTRY}/${ECR_REPO}:${IMAGE_TAG}
-
-sudo docker stop ${CONTAINER_NAME} || true
-sudo docker rm ${CONTAINER_NAME} || true
-
-sudo docker run -d \
-    --name ${CONTAINER_NAME} \
-    --restart always \
-    -p ${PORT_MAPPING} \
-    ${ECR_REGISTRY}/${ECR_REPO}:${IMAGE_TAG}
-
-sudo docker image prune -f
-
+            steps {
+                echo 'Deploying to private EC2 instance...'
+                // Scoped SSH agent binding for private key authentication
+                sshagent(['ec2-private-ssh-key']) {
+                    // FIXED: Changed """ to ''' and removed { } around variables!
+                sh '''
+                         ssh -o StrictHostKeyChecking=no $EC2_USER@$EC2_PRIVATE_IP << 'EOF'
+                         aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $ECR_REGISTRY
+                         docker pull $ECR_REGISTRY/$ECR_REPO:$IMAGE_TAG
+                         docker stop $CONTAINER_NAME || true
+                         docker rm $CONTAINER_NAME || true
+                         docker run -d --name $CONTAINER_NAME --restart always -p $PORT_MAPPING $ECR_REGISTRY/$ECR_REPO:$IMAGE_TAG
+                          docker image prune -f
 EOF
-"""
+                 '''
+                }
+            }
         }
-    }
-}
     }
 
     post {
