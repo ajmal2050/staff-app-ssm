@@ -5,6 +5,7 @@ pipeline {
         // Securely pull infrastructure secrets from Jenkins Credentials Store
         // Using 'credentials()' automatically masks these values in build logs!
         AWS_REGION     = credentials('aws-region-secret')
+        ECR_REGISTRY_URL   = credentials('aws-ecr-registry-url-full')
         ECR_REGISTRY   = credentials('aws-ecr-registry-url')
         ECR_REPO       = credentials('aws-ecr-repo-name')
         EC2_PRIVATE_IP = credentials('ec2-private-ip-secret')
@@ -66,7 +67,7 @@ pipeline {
                     // FIXED: Changed """ to ''' and removed { } around variables!
                 sh '''
                          ssh -o StrictHostKeyChecking=no $EC2_USER@$EC2_PRIVATE_IP << 'EOF'
-                         aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $ECR_REGISTRY
+                         aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $ECR_REGISTRY_FULL
                          docker pull $ECR_REGISTRY/$ECR_REPO:$IMAGE_TAG
                          docker stop $CONTAINER_NAME || true
                          docker rm $CONTAINER_NAME || true
