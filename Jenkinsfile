@@ -5,6 +5,7 @@ pipeline {
         // Securely pull infrastructure secrets from Jenkins Credentials Store
         // Using 'credentials()' automatically masks these values in build logs!
         AWS_REGION     = credentials('aws-region-secret')
+        TARGET_GROUP_ARN = credentials('aws-target-group-arn')   // ARN of your ALB target group
         ECR_REGISTRY   = credentials('aws-ecr-registry-url')
         ECR_REPO       = credentials('aws-ecr-repo-name')
         EC2_PRIVATE_IP = credentials('ec2-private-ip-secret')
@@ -77,6 +78,23 @@ pipeline {
                 }
             }
         }
+
+        stage('5. Register with Load Balancer') {
+    steps {
+        echo 'Registering EC2 instance with Load Balancer...'
+        sshagent(['ec2-private-ssh-key']) {
+            sh '''
+                ssh -o StrictHostKeyChecking=no $EC2_USER@$EC2_PRIVATE_IP "
+                    INSTANCE_ID=$(curl -s http://169.254.169.254/latest/meta-data/instance-id)
+                    aws elbv2 register-targets \
+                        --target-group-arn $TARGET_GROUP_ARN \
+                        --targets Id=$INSTANCE_ID
+                "
+            '''
+        }
+    }
+}
+     
     }
 
     post {
