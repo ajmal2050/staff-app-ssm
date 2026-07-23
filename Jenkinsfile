@@ -72,10 +72,14 @@ pipeline {
                 sh '''
         ssh -o StrictHostKeyChecking=no $EC2_USER@$EC2_PRIVATE_IP "
             aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $ECR_REGISTRY &&
-            docker pull $ECR_REGISTRY/$ECR_REPO:$IMAGE_TAG &&
-            docker stop $CONTAINER_NAME || true &&
-            docker rm $CONTAINER_NAME || true &&
-            docker run -d --name $CONTAINER_NAME --restart always -p $PORT_MAPPING $ECR_REGISTRY/$ECR_REPO:$IMAGE_TAG &&
+            docker pull $ECR_REGISTRY/$ECR_REPO-backend:version-${BUILD_NUMBER} &&
+            docker pull $ECR_REGISTRY/$ECR_REPO-frontend:version-${BUILD_NUMBER} &&
+            docker stop backend || true &&
+            docker rm backend || true &&
+            docker run -d --name backend --restart always -p 5000:5000 $ECR_REGISTRY/$ECR_REPO-backend:version-${BUILD_NUMBER} &&
+            docker stop frontend || true &&
+            docker rm frontend || true &&
+            docker run -d --name frontend --restart always -p 80:80 $ECR_REGISTRY/$ECR_REPO-frontend:version-${BUILD_NUMBER} &&
             docker image prune -f
         "
     '''
