@@ -1,9 +1,6 @@
 pipeline {
     agent any
 
-    echo "Target Group ARN: ${env.AWS_TARGET_GROUP_ARN}"
-
-
     environment {
         // Securely pull infrastructure secrets from Jenkins Credentials Store
         // Using 'credentials()' automatically masks these values in build logs!
