@@ -50,13 +50,14 @@ pipeline {
                 ]]) {
                     sh '''
                        aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $ECR_REGISTRY
-                      # Tag and push backend
-                docker tag ${ECR_REPO}_backend:latest $ECR_REGISTRY/$ECR_REPO-backend:version-${BUILD_NUMBER}
+                       # Backend (compose already tagged with $IMAGE_TAG)
+                docker tag $ECR_REGISTRY/$ECR_REPO:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPO-backend:version-${BUILD_NUMBER}
                 docker push $ECR_REGISTRY/$ECR_REPO-backend:version-${BUILD_NUMBER}
 
-                # Tag and push frontend
-                docker tag ${ECR_REPO}_frontend:latest $ECR_REGISTRY/$ECR_REPO-frontend:version-${BUILD_NUMBER}
+                # Frontend (compose builds as my-app-frontend:latest, so tag it here)
+                docker tag my-app-frontend:latest $ECR_REGISTRY/$ECR_REPO-frontend:version-${BUILD_NUMBER}
                 docker push $ECR_REGISTRY/$ECR_REPO-frontend:version-${BUILD_NUMBER}
+            '''
                        
                       '''
                 }
