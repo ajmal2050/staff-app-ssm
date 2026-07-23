@@ -81,8 +81,8 @@ pipeline {
                             
                             # Pull latest images and restart the stack correctly
                             cd /home/${EC2_USER} &&
-                            docker compose pull &&
-                            docker compose up -d &&
+                            docker-compose pull &&
+                            docker-compose up -d &&
                             docker image prune -f
                         '
                     """
