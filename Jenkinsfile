@@ -82,7 +82,7 @@ pipeline {
        stage('5. Register with Load Balancer') {
     steps {
         echo "Registering EC2 instance with Load Balancer..."
-        sshagent(['your-ssh-credential-id']) {
+        sshagent(['ec2-private-ssh-key']) {
             // Using triple double-quotes (""") allows Groovy to inject Jenkins env variables 
             // like ${EC2_USER} while we escape bash variables (\$) to run remotely.
             sh """
