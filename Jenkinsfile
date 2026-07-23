@@ -79,18 +79,26 @@ pipeline {
             }
         }
 
-        stage('5. Register with Load Balancer') {
+       stage('5. Register with Load Balancer') {
     steps {
-        echo 'Registering EC2 instance with Load Balancer...'
-        sshagent(['ec2-private-ssh-key']) {
-            sh '''
-                ssh -o StrictHostKeyChecking=no $EC2_USER@$EC2_PRIVATE_IP "
-                    INSTANCE_ID=$(curl -s http://169.254.169.254/latest/meta-data/instance-id)
-                    aws elbv2 register-targets \
-                        --target-group-arn $TARGET_GROUP_ARN \
-                        --targets Id=$INSTANCE_ID
-                "
-            '''
+        echo "Registering EC2 instance with Load Balancer..."
+        sshagent(['your-ssh-credential-id']) {
+            // Using triple double-quotes (""") allows Groovy to inject Jenkins env variables 
+            // like ${EC2_USER} while we escape bash variables (\$) to run remotely.
+            sh """
+                ssh -o StrictHostKeyChecking=no ${EC2_USER}@${EC2_PRIVATE_IP} '
+                    # 1. Fetch IMDSv2 token
+                    TOKEN=\$(curl -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600" -s)
+                    
+                    # 2. Fetch Instance ID using the token
+                    INSTANCE_ID=\$(curl -H "X-aws-ec2-metadata-token: \$TOKEN" -s http://169.254.169.254/latest/meta-data/instance-id)
+                    
+                    # 3. Register with ALB
+                    aws elbv2 register-targets \\
+                        --target-group-arn ${TARGET_GROUP_ARN} \\
+                        --targets Id=\$INSTANCE_ID
+                '
+            """
         }
     }
 }
