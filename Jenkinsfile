@@ -48,17 +48,13 @@ pipeline {
                     accessKeyVariable: 'AWS_ACCESS_KEY_ID',
                     secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
                 ]]) {
+                   // Because docker-compose.yml now applies the exact remote tags natively 
+                    // during 'docker compose build', we just push them directly.
                     sh '''
-                       aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $ECR_REGISTRY
-                       # Backend (compose already tagged with $IMAGE_TAG)
-                docker tag $ECR_REGISTRY/$ECR_REPO:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPO-backend:version-${BUILD_NUMBER}
-                docker push $ECR_REGISTRY/$ECR_REPO-backend:version-${BUILD_NUMBER}
-
-                # Frontend (compose builds as my-app-frontend:latest, so tag it here)
-                docker tag my-app-frontend:latest $ECR_REGISTRY/$ECR_REPO-frontend:version-${BUILD_NUMBER}
-                docker push $ECR_REGISTRY/$ECR_REPO-frontend:version-${BUILD_NUMBER}
-                       
-                      '''
+                        aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $ECR_REGISTRY
+                        docker push $ECR_REGISTRY/${ECR_REPO}-backend:${IMAGE_TAG}
+                        docker push $ECR_REGISTRY/${ECR_REPO}-frontend:${IMAGE_TAG}
+                    '''
                 }
             }
         }
@@ -68,21 +64,28 @@ pipeline {
                 echo 'Deploying to private EC2 instance...'
                 // Scoped SSH agent binding for private key authentication
                 sshagent(['ec2-private-ssh-key']) {
-                    // FIXED: Changed """ to ''' and removed { } around variables!
-                sh '''
-        ssh -o StrictHostKeyChecking=no $EC2_USER@$EC2_PRIVATE_IP "
-            aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $ECR_REGISTRY &&
-            docker pull $ECR_REGISTRY/$ECR_REPO-backend:version-${BUILD_NUMBER} &&
-            docker pull $ECR_REGISTRY/$ECR_REPO-frontend:version-${BUILD_NUMBER} &&
-            docker stop backend || true &&
-            docker rm backend || true &&
-            docker run -d --name backend --restart always -p 5000:5000 $ECR_REGISTRY/$ECR_REPO-backend:version-${BUILD_NUMBER} &&
-            docker stop frontend || true &&
-            docker rm frontend || true &&
-            docker run -d --name frontend --restart always -p 80:80 $ECR_REGISTRY/$ECR_REPO-frontend:version-${BUILD_NUMBER} &&
-            docker image prune -f
-        "
-    '''
+                 // 1. Copy the docker-compose file to the EC2 instance
+                    sh """
+                        scp -o StrictHostKeyChecking=no docker-compose.yml ${EC2_USER}@${EC2_PRIVATE_IP}:/home/${EC2_USER}/docker-compose.yml
+                    """
+                    
+                    // 2. SSH in, pass environment variables, and run docker compose
+                    sh """
+                        ssh -o StrictHostKeyChecking=no ${EC2_USER}@${EC2_PRIVATE_IP} '
+                            aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ECR_REGISTRY} &&
+                            
+                            # Export variables so remote docker compose can read them
+                            export ECR_REGISTRY=${ECR_REGISTRY}
+                            export ECR_REPO=${ECR_REPO}
+                            export IMAGE_TAG=${IMAGE_TAG}
+                            
+                            # Pull latest images and restart the stack correctly
+                            cd /home/${EC2_USER} &&
+                            docker compose pull &&
+                            docker compose up -d &&
+                            docker image prune -f
+                        '
+                    """
                 }
             }
         }
