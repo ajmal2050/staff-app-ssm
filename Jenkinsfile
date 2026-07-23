@@ -57,7 +57,6 @@ pipeline {
                 # Frontend (compose builds as my-app-frontend:latest, so tag it here)
                 docker tag my-app-frontend:latest $ECR_REGISTRY/$ECR_REPO-frontend:version-${BUILD_NUMBER}
                 docker push $ECR_REGISTRY/$ECR_REPO-frontend:version-${BUILD_NUMBER}
-            '''
                        
                       '''
                 }
