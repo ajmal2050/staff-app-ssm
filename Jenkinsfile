@@ -67,6 +67,7 @@ pipeline {
                  // 1. Copy the docker-compose file to the EC2 instance
                     sh """
                         scp -o StrictHostKeyChecking=no docker-compose.yml ${EC2_USER}@${EC2_PRIVATE_IP}:/home/${EC2_USER}/docker-compose.yml
+                        scp -r -o StrictHostKeyChecking=no postgres ${EC2_USER}@${EC2_PRIVATE_IP}:/home/${EC2_USER}/postgres
                     """
                     
                     // 2. SSH in, pass environment variables, and run docker compose
