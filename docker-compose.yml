@@ -19,6 +19,11 @@ services:
     environment:
       - AWS_DEFAULT_REGION=ap-south-1
       - AWS_SECRET_NAME=prod/myapp/secrets
+      - DB_HOST=postgres
+      - DB_USER=postgres
+      - DB_PASSWORD=mypassword
+      - DB_NAME=staff_db
+      - REDIS_HOST=redis
     networks:
       - frontend-net
       - backend-net
