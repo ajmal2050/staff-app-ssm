@@ -32,7 +32,7 @@ services:
       - backend-net
 
   postgres:
-    build: ./postgres
+    image: postgres:15
     environment:
       - AWS_DEFAULT_REGION=ap-south-1
       - AWS_SECRET_NAME=prod/myapp/secrets
