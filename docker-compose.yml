@@ -12,16 +12,10 @@ services:
   backend:
     build: ./backend
     image: ${ECR_REGISTRY}/${ECR_REPO}:backend-${IMAGE_TAG}
-    ports:
-      - "5000:5000"
     environment:
       - AWS_DEFAULT_REGION=ap-south-1
       - AWS_SECRET_NAME=prod/myapp/secrets
       - DB_HOST=postgres
-      - DB_USER=postgres
-      - DB_PASSWORD=mypassword
-      - DB_NAME=staff_db
-      - REDIS_HOST=redis
     networks:
       - frontend-net
       - backend-net
@@ -35,11 +29,10 @@ services:
       - backend-net
 
   postgres:
-    image: postgres:15
+    build: ./postgres   # uses Dockerfile + entrypoint script
     environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=mypassword
-      - POSTGRES_DB=staff_db
+      - AWS_DEFAULT_REGION=ap-south-1
+      - AWS_SECRET_NAME=prod/myapp/secrets
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
